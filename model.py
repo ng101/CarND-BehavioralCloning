@@ -54,12 +54,12 @@ def gen(df, root_dir, batch_size):
 def train():
     df = pd.read_csv('../data/driving_log_sample.csv')
     df = shuffle(df)
-    train, valid = train_test_split(df, test_size = 0.2)
+    train, valid = train_test_split(df, test_size = 0.33)
     model = get_model()
     model.fit_generator(
             gen(train, '../data/', 128),
             samples_per_epoch = len(train),
-            nb_epoch=1,
+            nb_epoch=10,
             validation_data=gen(valid, '../data/', 128),
             nb_val_samples=len(valid)
             )
