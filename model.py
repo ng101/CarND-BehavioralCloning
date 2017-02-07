@@ -37,7 +37,7 @@ def get_model():
     model.compile(loss='mse', optimizer='Adam', metrics=['mse'])
     return model
 
-def gen(df, root_dir, batch_size):
+def gen(df, batch_size):
     df = df.as_matrix()
     start = 0
     while True:
@@ -46,21 +46,30 @@ def gen(df, root_dir, batch_size):
         X = np.ndarray(shape=(len(batch), 160, 320, 3), dtype=np.float32)
         Y = np.zeros((len(batch)))
         for i in range(len(batch)):
-            image_file = batch[i, 0]
-            X[i, :, :, :] = (mpimg.imread(os.path.join(root_dir, image_file)).astype(float))
-            Y[i] = batch[i, 3]
+            image_file = batch[i, 0].strip()
+            X[i, :, :, :] = (mpimg.imread(image_file).astype(float))
+            Y[i] = batch[i, 1]
         yield (X, Y)
 
 def train():
-    df = pd.read_csv('../data/driving_log_sample.csv')
+    df = pd.read_csv('../training_data_2/driving_log.csv')
+    dfc = df[['center', 'steering']].rename(columns={'center':'image'})
+    dfl = df[['left', 'steering']].rename(columns={'left':'image'})
+    dfl['steering'] = dfl['steering'] + 0.2
+    dfr = df[['right', 'steering']].rename(columns={'right':'image'})
+    dfr['steering'] = dfr['steering'] - 0.2
+    dfn = pd.concat([dfc, dfl, dfr])
+    df = dfn.dropna() # beta simulator doesn't give left/right images
+
     df = shuffle(df)
     train, valid = train_test_split(df, test_size = 0.33)
     model = get_model()
+    batch_size = 128
     model.fit_generator(
-            gen(train, '../data/', 128),
-            samples_per_epoch = len(train),
+            gen(train, batch_size),
+            samples_per_epoch = (len(train) // batch_size) * batch_size,
             nb_epoch=10,
-            validation_data=gen(valid, '../data/', 128),
+            validation_data=gen(valid, batch_size),
             nb_val_samples=len(valid)
             )
     model.save('model.h5')
