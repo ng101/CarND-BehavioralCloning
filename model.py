@@ -18,7 +18,7 @@ tf.python.control_flow_ops = tf
 def get_model():
     model = Sequential()
     model.add(Lambda(lambda x : x/255.0 - 0.5, input_shape=(160, 320, 3), output_shape=(160, 320, 3)))
-    model.add(Cropping2D(cropping=((50, 20), (0,0))))
+    model.add(Cropping2D(cropping=((50, 0), (0,0))))
     # Conv
     model.add(Convolution2D(24, 5, 5, subsample=(2,2), border_mode='valid'))
     model.add(Activation('relu'))
@@ -88,7 +88,7 @@ def train():
     print(df['steering'].quantile([0.01,0.05,.1,.2,.3,.4,.5,.6,.7,.8,.9,.95,0.99]))
     print(df['steering'].describe())
     df = shuffle(df)
-    train, valid = train_test_split(df, test_size = 0.20)
+    train, valid = train_test_split(df, test_size = 0.30)
     model = get_model()
     batch_size = 256
     root = '../tr/'
